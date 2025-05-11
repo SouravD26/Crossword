@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>Crossword</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Times New Roman", Times, serif;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        user-select: none;
+      }
+
+      h1 {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .game-container {
+        display: flex;
+        flex-direction: row;
+        gap: 30px;
+        background-color: #fff;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        flex-wrap: wrap;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(10, 30px);
+        grid-template-rows: repeat(10, 30px);
+        gap: 1px;
+        margin: auto;
+      }
+
+      .cell {
+        width: 30px;
+        height: 30px;
+        border: 1px solid #ccc;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .grid,
+      .cell {
+        user-select: none;
+        overflow: hidden;
+      }
+      .cell:focus {
+        border: 2px solid #007bff;
+      }
+
+      .black {
+        background-color: #333; /* Dark color for unused cells */
+        pointer-events: none;
+      }
+
+      .clue-number {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        font-size: 10px;
+        color: #555;
+        pointer-events: none;
+      }
+
+      .clues-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        min-width: 200px;
+      }
+
+      .clues {
+        background-color: #f9f9f9;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+      }
+      .letter {
+        width: 100%;
+        font-family: "Noto Sans Devanagari", "Mangal", sans-serif;
+        height: 100%;
+        text-align: center;
+        line-height: 30px;
+        font-size: 16px;
+        user-select: text;
+
+        outline: none;
+      }
+
+      .clues h2 {
+        margin-bottom: 8px;
+        font-size: 1.1em;
+      }
+
+      .clues ul {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .clues li {
+        font-size: 0.95em;
+        margin-bottom: 6px;
+        cursor: pointer;
+      }
+
+      .clues li:hover {
+        text-decoration: underline;
+        color: #36b417;
+      }
+
+      button {
+        margin-top: 5px;
+        padding: 8px;
+        border: none;
+        color: white;
+        background-color: green;
+        border-radius: 10px;
+        font-size: 15px;
+      }
+
+      button:hover {
+        background-color: rgb(4, 90, 4);
+      }
+
+      /* Media Queries for Responsiveness */
+
+      /* For tablets */
+      @media (max-width: 768px) {
+        .game-container {
+          flex-direction: column;
+          gap: 30px;
+        }
+
+        .grid {
+          grid-template-columns: repeat(10, 30px);
+          grid-template-rows: repeat(10, 30px);
+        }
+
+        .clues-container {
+          min-width: 100%;
+        }
+
+        .clues {
+          padding: 8px;
+        }
+
+        button {
+          padding: 10px;
+          font-size: 16px;
+        }
+      }
+
+      /* For mobile devices */
+      @media (max-width: 480px) {
+        .game-container {
+          padding: 10px;
+          gap: 10px;
+        }
+
+        .grid {
+          /* Change for Mobile view  */
+          grid-template-columns: repeat(10, 30px);
+          grid-template-rows: repeat(10 30px);
+        }
+
+        .cell {
+          width: 25px;
+          height: 25px;
+          font-size: 14px;
+        }
+
+        .clues-container {
+          min-width: 100%;
+        }
+
+        .clues {
+          padding: 6px;
+        }
+
+        button {
+          padding: 8px;
+          font-size: 14px;
+        }
+      }
+
+      /* For very small mobile devices */
+      @media (max-width: 320px) {
+        .game-container {
+          padding: 5px;
+          gap: 5px;
+        }
+
+        .grid {
+          grid-template-columns: repeat(8, 30px);
+          grid-template-rows: repeat(8, 30px);
+        }
+
+        .cell {
+          width: 20px;
+          height: 20px;
+          font-size: 12px;
+        }
+
+        .clues-container {
+          min-width: 100%;
+        }
+
+        .clues {
+          padding: 5px;
+        }
+
+        button {
+          padding: 6px;
+          font-size: 13px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1 style="text-decoration: underline">Crossword</h1>
+    <div class="game-container">
+      <div class="grid" id="crossword-grid"></div>
+      <div class="clues-container">
+        <div class="clues">
+          <h2 style="text-decoration: underline">Across</h2>
+          <ul id="across-clues"></ul>
+        </div>
+        <div class="clues">
+          <h2 style="text-decoration: underline">Down</h2>
+          <ul id="down-clues"></ul>
+        </div>
+        <button onclick="checkAnswers()">Check Answers</button>
+      </div>
+    </div>
+
+    <script>
+      const gridSize = 10;
+      const gridContainer = document.getElementById("crossword-grid");
+      const acrossList = document.getElementById("across-clues");
+      const downList = document.getElementById("down-clues");
+
+      // Sample word list (add more words as needed)
+      const wordList = [
+        { word: "Property", clue: "Wealth or assets" },
+        { word: "India", clue: "Country" },
+        { word: "Knowledge", clue: "Information" },
+        { word: "Values", clue: "Good qualities in society" },
+        { word: "Health", clue: "State of body and mind" },
+        { word: "Constitution", clue: "Collection of fundamental principles" },
+        { word: "Freedom", clue: "State of being free" },
+        { word: "Justice", clue: "Fairness in treatment" },
+        { word: "Equality", clue: "State of being equal" },
+        { word: "Democracy", clue: "Government by the people" },
+        { word: "Unity", clue: "State of being united" },
+        { word: "Diversity", clue: "Variety in culture" },
+        { word: "Respect", clue: "Admiration for someone" },
+        { word: "Responsibility", clue: "Duty to deal with something" },
+        { word: "Integrity", clue: "Quality of being honest" },
+        { word: "Compassion", clue: "Sympathy for others" },
+        { word: "Empathy", clue: "Understanding others' feelings" },
+        { word: "Courage", clue: "Ability to confront fear" },
+        { word: "Perseverance", clue: "Persistence in doing something" },
+        { word: "Innovation", clue: "Introduction of new ideas" },
+        { word: "Sustainability", clue: "Ability to be maintained" },
+        { word: "Community", clue: "Group of people living together" },
+        { word: "Environment", clue: "Surroundings or conditions" },
+        { word: "Education", clue: "Process of receiving knowledge" },
+        { word: "Culture", clue: "Ideas, customs, and social behavior" },
+        { word: "Tradition", clue: "Custom or belief passed down" },
+        { word: "Heritage", clue: "Legacy or tradition of a group" },
+        { word: "Language", clue: "System of communication" },
+        { word: "History", clue: "Study of past events" },
+        { word: "Art", clue: "Expression of creativity" },
+        { word: "Science", clue: "Systematic study of the structure" },
+        { word: "Technology", clue: "Application of scientific knowledge" },
+        { word: "Economy", clue: "System of production and consumption" },
+        { word: "Politics", clue: "Activities associated with governance" },
+        { word: "Society", clue: "Community of people living together" },
+        {
+          word: "Philosophy",
+          clue: "Study of fundamental nature of knowledge",
+        },
+        { word: "Religion", clue: "System of faith and worship" },
+        { word: "Justice", clue: "Fairness in the way people are treated" },
+        { word: "Peace", clue: "State of tranquility or quiet" },
+        { word: "Love", clue: "Intense feeling of deep affection" },
+        { word: "Friendship", clue: "Close and trusting relationship" },
+        { word: "Family", clue: "Group of related individuals" },
+        { word: "Kindness", clue: "Quality of being friendly and generous" },
+        { word: "Gratitude", clue: "Feeling of thankfulness" },
+        { word: "Hope", clue: "Expectation for a positive outcome" },
+        { word: "Dream", clue: "Series of thoughts during sleep" },
+        { word: "Adventure", clue: "Exciting or unusual experience" },
+        { word: "Journey", clue: "Act of traveling from one place to another" },
+        { word: "Discovery", clue: "Finding something new" },
+        {
+          word: "Exploration",
+          clue: "Traveling in or through an unfamiliar area",
+        },
+        { word: "Challenge", clue: "Task or situation that tests abilities" },
+        { word: "Success", clue: "Achievement of a goal" },
+        { word: "Failure", clue: "Lack of success" },
+        { word: "Resilience", clue: "Ability to recover from difficulties" },
+        { word: "Wisdom", clue: "Quality of having experience and knowledge" },
+        { word: "Creativity", clue: "Use of imagination to create something" },
+        { word: "Passion", clue: "Strong enthusiasm for something" },
+        { word: "Ambition", clue: "Strong desire to achieve something" },
+        { word: "Vision", clue: "Ability to think about the future" },
+        { word: "Leadership", clue: "Action of leading a group" },
+        { word: "Teamwork", clue: "Cooperative effort by a group" },
+        { word: "Collaboration", clue: "Working together to achieve a goal" },
+        { word: "Communication", clue: "Exchange of information" },
+        { word: "Connection", clue: "Relationship or link between people" },
+        { word: "Support", clue: "Providing assistance or encouragement" },
+        { word: "Encouragement", clue: "Action of giving support" },
+        { word: "Motivation", clue: "Reason for doing something" },
+        { word: "Inspiration", clue: "Process of being mentally stimulated" },
+        { word: "Dedication", clue: "Commitment to a task or purpose" },
+        { word: "Discipline", clue: "Training to improve skills" },
+        { word: "Focus", clue: "Concentration on a particular task" },
+        { word: "Balance", clue: "State of equilibrium" },
+        { word: "Wellness", clue: "State of being in good health" },
+        { word: "Mindfulness", clue: "Quality of being present and aware" },
+        { word: "Self-care", clue: "Taking care of one's own needs" },
+        { word: "Empowerment", clue: "Giving power or authority to someone" },
+        { word: "Advocacy", clue: "Public support for a cause" },
+        { word: "Activism", clue: "Efforts to promote social change" },
+        { word: "Volunteerism", clue: "Offering services without payment" },
+        {
+          word: "Philanthropy",
+          clue: "Desire to promote the welfare of others",
+        },
+        { word: "Charity", clue: "Voluntary giving to help others" },
+        { word: "Generosity", clue: "Quality of being kind and giving" },
+        { word: "Compassion", clue: "Sympathetic concern for others" },
+        {
+          word: "Altruism",
+          clue: "Selfless concern for the well-being of others",
+        },
+        { word: "Kindness", clue: "Quality of being friendly and considerate" },
+        { word: "Gratitude", clue: "Feeling of thankfulness" },
+        { word: "Forgiveness", clue: "Action of forgiving or being forgiven" },
+        {
+          word: "Acceptance",
+          clue: "Action of consenting to receive something",
+        },
+        { word: "Tolerance", clue: "Willingness to accept differences" },
+        {
+          word: "Patience",
+          clue: "Ability to accept delay without frustration",
+        },
+        { word: "Humility", clue: "Quality of being humble" },
+        { word: "Honesty", clue: "Quality of being truthful" },
+        {
+          word: "Integrity",
+          clue: "Quality of being honest and having strong morals",
+        },
+        { word: "Respect", clue: "Admiration for someone or something" },
+        { word: "Trust", clue: "Firm belief in the reliability of someone" },
+        { word: "Loyalty", clue: "Strong feeling of support or allegiance" },
+        {
+          word: "Friendship",
+          clue: "Close and trusting relationship between people",
+        },
+        { word: "Community", clue: "Group of people living together" },
+        { word: "Connection", clue: "Relationship or link between people" },
+        { word: "Belonging", clue: "Feeling of being accepted and included" },
+        { word: "Unity", clue: "State of being united or joined" },
+        { word: "Diversity", clue: "Variety in culture" },
+        { word: "Inclusion", clue: "Action of including or being included" },
+        { word: "Equity", clue: "Fairness and justice in treatment" },
+        { word: "Justice", clue: "Fairness in the way people are treated" },
+        { word: "Peace", clue: "State of tranquility or quiet" },
+        { word: "Harmony", clue: "State of being in agreement" },
+        { word: "Collaboration", clue: "Working together to achieve a goal" },
+        {
+          word: "Synergy",
+          clue: "Interaction of elements to produce a greater effect",
+        },
+        { word: "Teamwork", clue: "Cooperative effort by a group" },
+        { word: "Leadership", clue: "Action of leading a group" },
+        { word: "Mentorship", clue: "Guidance provided by a mentor" },
+        { word: "Cooperation", clue: "Working together towards a common goal" },
+        { word: "Support", clue: "Providing assistance or encouragement" },
+        { word: "Encouragement", clue: "Action of giving support" },
+        { word: "Motivation", clue: "Reason for doing something" },
+        { word: "Inspiration", clue: "Process of being mentally stimulated" },
+        { word: "Dedication", clue: "Commitment to a task or purpose" },
+        { word: "Discipline", clue: "Training to improve skills" },
+        { word: "Focus", clue: "Concentration on a particular task" },
+        { word: "Balance", clue: "State of equilibrium" },
+        { word: "Wellness", clue: "State of being in good health" },
+        { word: "Mindfulness", clue: "Quality of being present and aware" },
+        { word: "Self-care", clue: "Taking care of one's own needs" },
+        { word: "Empowerment", clue: "Giving power or authority to someone" },
+        { word: "Advocacy", clue: "Public support for a cause" },
+        { word: "Activism", clue: "Efforts to promote social change" },
+        { word: "Volunteerism", clue: "Offering services without payment" },
+        {
+          word: "Philanthropy",
+          clue: "Desire to promote the welfare of others",
+        },
+        { word: "Charity", clue: "Voluntary giving to help others" },
+        { word: "Generosity", clue: "Quality of being kind and giving" },
+        { word: "Compassion", clue: "Sympathetic concern for others" },
+        {
+          word: "Altruism",
+          clue: "Selfless concern for the well-being of others",
+        },
+        { word: "Kindness", clue: "Quality of being friendly and considerate" },
+        { word: "Gratitude", clue: "Feeling of thankfulness" },
+        { word: "Forgiveness", clue: "Action of forgiving or being forgiven" },
+        {
+          word: "Acceptance",
+          clue: "Action of consenting to receive something",
+        },
+        { word: "Tolerance", clue: "Willingness to accept differences" },
+        {
+          word: "Patience",
+          clue: "Ability to accept delay without frustration",
+        },
+        { word: "Humility", clue: "Quality of being humble" },
+        { word: "Honesty", clue: "Quality of being truthful" },
+        {
+          word: "Integrity",
+          clue: "Quality of being honest and having strong morals",
+        },
+        { word: "Respect", clue: "Admiration for someone or something" },
+        { word: "Trust", clue: "Firm belief in the reliability of someone" },
+        { word: "Loyalty", clue: "Strong feeling of support or allegiance" },
+        {
+          word: "Friendship",
+          clue: "Close and trusting relationship between people",
+        },
+        { word: "Community", clue: "Group of people living together" },
+        { word: "Connection", clue: "Relationship or link between people" },
+        { word: "Belonging", clue: "Feeling of being accepted and included" },
+        { word: "Unity", clue: "State of being united or joined" },
+        { word: "Diversity", clue: "Variety in culture" },
+        { word: "Inclusion", clue: "Action of including or being included" },
+        { word: "Equity", clue: "Fairness and justice in treatment" },
+        { word: "Justice", clue: "Fairness in the way people are treated" },
+        { word: "Peace", clue: "State of tranquility or quiet" },
+        { word: "Harmony", clue: "State of being in agreement" },
+        { word: "Collaboration", clue: "Working together to achieve a goal" },
+        {
+          word: "Synergy",
+          clue: "Interaction of elements to produce a greater effect",
+        },
+        { word: "Teamwork", clue: "Cooperative effort by a group" },
+        { word: "Leadership", clue: "Action of leading a group" },
+        { word: "Mentorship", clue: "Guidance provided by a mentor" },
+        { word: "Cooperation", clue: "Working together towards a common goal" },
+        { word: "Support", clue: "Providing assistance or encouragement" },
+        { word: "Encouragement", clue: "Action of giving support" },
+        { word: "Motivation", clue: "Reason for doing something" },
+        { word: "Inspiration", clue: "Process of being mentally stimulated" },
+        { word: "Dedication", clue: "Commitment to a task or purpose" },
+        { word: "Discipline", clue: "Training to improve skills" },
+        { word: "Focus", clue: "Concentration on a particular task" },
+        { word: "Balance", clue: "State of equilibrium" },
+        { word: "Wellness", clue: "State of being in good health" },
+        { word: "Mindfulness", clue: "Quality of being present and aware" },
+        { word: "Self-care", clue: "Taking care of one's own needs" },
+        { word: "Empowerment", clue: "Giving power or authority to someone" },
+        { word: "Advocacy", clue: "Public support for a cause" },
+        { word: "Activism", clue: "Efforts to promote social change" },
+        { word: "Volunteerism", clue: "Offering services without payment" },
+        {
+          word: "Philanthropy",
+          clue: "Desire to promote the welfare of others",
+        },
+        { word: "Charity", clue: "Voluntary giving to help others" },
+        { word: "Generosity", clue: "Quality of being kind and giving" },
+        { word: "Compassion", clue: "Sympathetic concern for others" },
+        {
+          word: "Altruism",
+          clue: "Selfless concern for the well-being of others",
+        },
+        { word: "Kindness", clue: "Quality of being friendly and considerate" },
+        { word: "Gratitude", clue: "Feeling of thankfulness" },
+        { word: "Forgiveness", clue: "Action of forgiving or being forgiven" },
+        {
+          word: "Acceptance",
+          clue: "Action of consenting to receive something",
+        },
+        { word: "Tolerance", clue: "Willingness to accept differences" },
+        {
+          word: "Patience",
+          clue: "Ability to accept delay without frustration",
+        },
+        { word: "Humility", clue: "Quality of being humble" },
+        { word: "Honesty", clue: "Quality of being truthful" },
+        {
+          word: "Integrity",
+          clue: "Quality of being honest and having strong morals",
+        },
+        { word: "Respect", clue: "Admiration for someone or something" },
+        { word: "Trust", clue: "Firm belief in the reliability of someone" },
+        { word: "Loyalty", clue: "Strong feeling of support or allegiance" },
+        {
+          word: "Friendship",
+          clue: "Close and trusting relationship between people",
+        },
+        { word: "Community", clue: "Group of people living together" },
+        { word: "Connection", clue: "Relationship or link between people" },
+        { word: "Belonging", clue: "Feeling of being accepted and included" },
+        { word: "Unity", clue: "State of being united or joined" },
+        { word: "Diversity", clue: "Variety in culture" },
+        { word: "Inclusion", clue: "Action of including or being included" },
+        { word: "Equity", clue: "Fairness and justice in treatment" },
+        { word: "Justice", clue: "Fairness in the way people are treated" },
+        { word: "Peace", clue: "State of tranquility or quiet" },
+        { word: "Harmony", clue: "State of being in agreement" },
+        { word: "Collaboration", clue: "Working together to achieve a goal" },
+        {
+          word: "Synergy",
+          clue: "Interaction of elements to produce a greater effect",
+        },
+        { word: "Teamwork", clue: "Cooperative effort by a group" },
+        { word: "Leadership", clue: "Action of leading a group" },
+        { word: "Mentorship", clue: "Guidance provided by a mentor" },
+        { word: "Cooperation", clue: "Working together towards a common goal" },
+        { word: "Support", clue: "Providing assistance or encouragement" },
+        { word: "Encouragement", clue: "Action of giving support" },
+        { word: "Motivation", clue: "Reason for doing something" },
+        { word: "Inspiration", clue: "Process of being mentally stimulated" },
+        { word: "Dedication", clue: "Commitment to a task or purpose" },
+        { word: "Discipline", clue: "Training to improve skills" },
+        { word: "Focus", clue: "Concentration on a particular task" },
+        { word: "Balance", clue: "State of equilibrium" },
+        { word: "Wellness", clue: "State of being in good health" },
+        { word: "Mindfulness", clue: "Quality of being present and aware" },
+        { word: "Self-care", clue: "Taking care of one's own needs" },
+        { word: "Empowerment", clue: "Giving power or authority to someone" },
+        { word: "Advocacy", clue: "Public support for a cause" },
+        { word: "Activism", clue: "Efforts to promote social change" },
+        { word: "Volunteerism", clue: "Offering services without payment" },
+        {
+          word: "Philanthropy",
+          clue: "Desire to promote the welfare of others",
+        },
+        { word: "Charity", clue: "Voluntary giving to help others" },
+        { word: "Generosity", clue: "Quality of being kind and giving" },
+        { word: "Compassion", clue: "Sympathetic concern for others" },
+        {
+          word: "Altruism",
+          clue: "Selfless concern for the well-being of others",
+        },
+        { word: "Kindness", clue: "Quality of being friendly and considerate" },
+        { word: "Gratitude", clue: "Feeling of thankfulness" },
+        { word: "Forgiveness", clue: "Action of forgiving or being forgiven" },
+        {
+          word: "Acceptance",
+          clue: "Action of consenting to receive something",
+        },
+        { word: "Tolerance", clue: "Willingness to accept differences" },
+        {
+          word: "Patience",
+          clue: "Ability to accept delay without frustration",
+        },
+        { word: "Humility", clue: "Quality of being humble" },
+        { word: "Honesty", clue: "Quality of being truthful" },
+        {
+          word: "Integrity",
+          clue: "Quality of being honest and having strong morals",
+        },
+        { word: "Respect", clue: "Admiration for someone or something" },
+        { word: "Trust", clue: "Firm belief in the reliability of someone" },
+        { word: "Loyalty", clue: "Strong feeling of support or allegiance" },
+        {
+          word: "Friendship",
+          clue: "Close and trusting relationship between people",
+        },
+        { word: "Community", clue: "Group of people living together" },
+        { word: "Connection", clue: "Relationship or link between people" },
+        { word: "Belonging", clue: "Feeling of being accepted and included" },
+        { word: "Unity", clue: "State of being united or joined" },
+        { word: "Diversity", clue: "Variety in culture" },
+        { word: "Inclusion", clue: "Action of including or being included" },
+        { word: "Equity", clue: "Fairness and justice in treatment" },
+        { word: "Justice", clue: "Fairness in the way people are treated" },
+        { word: "Peace", clue: "State of tranquility or quiet" },
+        { word: "Harmony", clue: "State of being in agreement" },
+        { word: "Collaboration", clue: "Working together to achieve a goal" },
+        {
+          word: "Synergy",
+          clue: "Interaction of elements to produce a greater effect",
+        },
+        { word: "Teamwork", clue: "Cooperative effort by a group" },
+        { word: "Leadership", clue: "Action of leading a group" },
+        { word: "Mentorship", clue: "Guidance provided by a mentor" },
+        { word: "Cooperation", clue: "Working together towards a common goal" },
+        { word: "Support", clue: "Providing assistance or encouragement" },
+        { word: "Encouragement", clue: "Action of giving support" },
+        { word: "Motivation", clue: "Reason for doing something" },
+        { word: "Inspiration", clue: "Process of being mentally stimulated" },
+        { word: "Dedication", clue: "Commitment to a task or purpose" },
+        { word: "Discipline", clue: "Training to improve skills" },
+        { word: "Focus", clue: "Concentration on a particular task" },
+        { word: "Balance", clue: "State of equilibrium" },
+        { word: "Wellness", clue: "State of being in good health" },
+        { word: "Mindfulness", clue: "Quality of being present and aware" },
+        { word: "Self-care", clue: "Taking care of one's own needs" },
+        { word: "Empowerment", clue: "Giving power or authority to someone" },
+        { word: "Advocacy", clue: "Public support for a cause" },
+        { word: "Activism", clue: "Efforts to promote social change" },
+        { word: "Volunteerism", clue: "Offering services without payment" },
+        {
+          word: "Philanthropy",
+          clue: "Desire to promote the welfare of others",
+        },
+        { word: "Charity", clue: "Voluntary giving to help others" },
+        { word: "Generosity", clue: "Quality of being kind and giving" },
+        { word: "Compassion", clue: "Sympathetic concern for others" },
+        {
+          word: "Altruism",
+          clue: "Selfless concern for the well-being of others",
+        },
+        { word: "Kindness", clue: "Quality of being friendly and considerate" },
+        { word: "Gratitude", clue: "Feeling of thankfulness" },
+        { word: "Forgiveness", clue: "Action of forgiving or being forgiven" },
+        {
+          word: "Acceptance",
+          clue: "Action of consenting to receive something",
+        },
+        { word: "Tolerance", clue: "Willingness to accept differences" },
+        {
+          word: "Patience",
+          clue: "Ability to accept delay without frustration",
+        },
+        { word: "Humility", clue: "Quality of being humble" },
+        { word: "Honesty", clue: "Quality of being truthful" },
+        {
+          word: "Integrity",
+          clue: "Quality of being honest and having strong morals",
+        },
+        { word: "Respect", clue: "Admiration for someone or something" },
+        { word: "Trust", clue: "Firm belief in the reliability of someone" },
+        { word: "Loyalty", clue: "Strong feeling of support or allegiance" },
+        {
+          word: "Friendship",
+          clue: "Close and trusting relationship between people",
+        },
+        { word: "Community", clue: "Group of people living together" },
+        { word: "Connection", clue: "Relationship or link between people" },
+        { word: "Belonging", clue: "Feeling of being accepted and included" },
+        { word: "Unity", clue: "State of being united or joined" },
+        { word: "Diversity", clue: "Variety in culture" },
+        { word: "Inclusion", clue: "Action of including or being included" },
+        { word: "Equity", clue: "Fairness and justice in treatment" },
+        { word: "Justice", clue: "Fairness in the way people are treated" },
+        { word: "Peace", clue: "State of tranquility or quiet" },
+        { word: "Harmony", clue: "State of being in agreement" },
+        { word: "Collaboration", clue: "Working together to achieve a goal" },
+        {
+          word: "Synergy",
+          clue: "Interaction of elements to produce a greater effect",
+        },
+        { word: "Teamwork", clue: "Cooperative effort by a group" },
+        { word: "Leadership", clue: "Action of leading a group" },
+        { word: "Mentorship", clue: "Guidance provided by a mentor" },
+        { word: "Cooperation", clue: "Working together towards a common goal" },
+        { word: "Support", clue: "Providing assistance or encouragement" },
+        { word: "Encouragement", clue: "Action of giving support" },
+        { word: "Motivation", clue: "Reason for doing something" },
+        { word: "Inspiration", clue: "Process of being mentally stimulated" },
+        { word: "Dedication", clue: "Commitment to a task or purpose" },
+        { word: "Discipline", clue: "Training to improve skills" },
+        { word: "Focus", clue: "Concentration on a particular task" },
+        { word: "Balance", clue: "State of equilibrium" },
+        { word: "Wellness", clue: "State of being in good health" },
+        { word: "Mindfulness", clue: "Quality of being present and aware" },
+        { word: "Self-care", clue: "Taking care of one's own needs" },
+        { word: "Empowerment", clue: "Giving power or authority to someone" },
+        { word: "Advocacy", clue: "Public support for a cause" },
+        { word: "Activism", clue: "Efforts to promote social change" },
+        { word: "Volunteerism", clue: "Offering services without payment" },
+        {
+          word: "Philanthropy",
+          clue: "Desire to promote the welfare of others",
+        },
+        { word: "Charity", clue: "Voluntary giving to help others" },
+        { word: "Generosity", clue: "Quality of being kind and giving" },
+        { word: "Compassion", clue: "Sympathetic concern for others" },
+        {
+          word: "Altruism",
+          clue: "Selfless concern for the well-being of others",
+        },
+        { word: "Kindness", clue: "Quality of being friendly and considerate" },
+        { word: "Gratitude", clue: "Feeling of thankfulness" },
+        { word: "Forgiveness", clue: "Action of forgiving or being forgiven" },
+        {
+          word: "Acceptance",
+          clue: "Action of consenting to receive something",
+        },
+        { word: "Tolerance", clue: "Willingness to accept differences" },
+        {
+          word: "Patience",
+          clue: "Ability to accept delay without frustration",
+        },
+        { word: "Humility", clue: "Quality of being humble" },
+        { word: "Honesty", clue: "Quality of being truthful" },
+        {
+          word: "Integrity",
+          clue: "Quality of being honest and having strong morals",
+        },
+        { word: "Respect", clue: "Admiration for someone or something" },
+        { word: "Trust", clue: "Firm belief in the reliability of someone" },
+        { word: "Loyalty", clue: "Strong feeling of support or allegiance" },
+        {
+          word: "Friendship",
+          clue: "Close and trusting relationship between people",
+        },
+        { word: "Community", clue: "Group of people living together" },
+        { word: "Connection", clue: "Relationship or link between people" },
+        { word: "Belonging", clue: "Feeling of being accepted and included" },
+        { word: "Unity", clue: "State of being united or joined" },
+        { word: "Diversity", clue: "Variety in culture" },
+        { word: "Inclusion", clue: "Action of including or being included" },
+        { word: "Equity", clue: "Fairness and justice in treatment" },
+        { word: "Justice", clue: "Fairness in the way people are treated" },
+        { word: "Peace", clue: "State of tranquility or quiet" },
+        { word: "Harmony", clue: "State of being in agreement" },
+        { word: "Collaboration", clue: "Working together to achieve a goal" },
+        {
+          word: "Synergy",
+          clue: "Interaction of elements to produce a greater effect",
+        },
+        { word: "Teamwork", clue: "Cooperative effort by a group" },
+        { word: "Leadership", clue: "Action of leading a group" },
+        { word: "Mentorship", clue: "Guidance provided by a mentor" },
+        { word: "Cooperation", clue: "Working together towards a common goal" },
+        { word: "Support", clue: "Providing assistance or encouragement" },
+        { word: "Encouragement", clue: "Action of giving support" },
+        { word: "Motivation", clue: "Reason for doing something" },
+        { word: "Inspiration", clue: "Process of being mentally stimulated" },
+        { word: "Dedication", clue: "Commitment to a task or purpose" },
+        { word: "Discipline", clue: "Training to improve skills" },
+        { word: "Focus", clue: "Concentration on a particular task" },
+        { word: "Balance", clue: "State of equilibrium" },
+        { word: "Wellness", clue: "State of being in good health" },
+        { word: "Mindfulness", clue: "Quality of being present and aware" },
+        { word: "Self-care", clue: "Taking care of one's own needs" },
+        { word: "Empowerment", clue: "Giving power or authority to someone" },
+        { word: "Advocacy", clue: "Public support for a cause" },
+        { word: "Activism", clue: "Efforts to promote social change" },
+        { word: "Volunteerism", clue: "Offering services without payment" },
+        {
+          word: "Philanthropy",
+          clue: "Desire to promote the welfare of others",
+        },
+        { word: "Charity", clue: "Voluntary giving to help others" },
+        { word: "Generosity", clue: "Quality of being kind and giving" },
+        { word: "Compassion", clue: "Sympathetic concern for others" },
+        {
+          word: "Altruism",
+          clue: "Selfless concern for the well-being of others",
+        },
+        { word: "Kindness", clue: "Quality of being friendly and considerate" },
+        { word: "Gratitude", clue: "Feeling of thankfulness" },
+        { word: "Forgiveness", clue: "Action of forgiving or being forgiven" },
+        {
+          word: "Acceptance",
+          clue: "Action of consenting to receive something",
+        },
+        { word: "Tolerance", clue: "Willingness to accept differences" },
+        {
+          word: "Patience",
+          clue: "Ability to accept delay without frustration",
+        },
+        { word: "Humility", clue: "Quality of being humble" },
+        { word: "Honesty", clue: "Quality of being truthful" },
+        {
+          word: "Integrity",
+          clue: "Quality of being honest and having strong morals",
+        },
+        { word: "Respect", clue: "Admiration for someone or something" },
+        { word: "Trust", clue: "Firm belief in the reliability of someone" },
+        { word: "Loyalty", clue: "Strong feeling of support or allegiance" },
+        {
+          word: "Friendship",
+          clue: "Close and trusting relationship between people",
+        },
+        { word: "Community", clue: "Group of people living together" },
+        { word: "Connection", clue: "Relationship or link between people" },
+        { word: "Belonging", clue: "Feeling of being accepted and included" },
+        { word: "Unity", clue: "State of being united or joined" },
+        { word: "Diversity", clue: "Variety in culture" },
+        { word: "Inclusion", clue: "Action of including or being included" },
+        { word: "Equity", clue: "Fairness and justice in treatment" },
+        { word: "Justice", clue: "Fairness in the way people are treated" },
+        { word: "Peace", clue: "State of tranquility or quiet" },
+        { word: "Harmony", clue: "State of being in agreement" },
+        { word: "Collaboration", clue: "Working together to achieve a goal" },
+        {
+          word: "Synergy",
+          clue: "Interaction of elements to produce a greater effect",
+        },
+        { word: "Teamwork", clue: "Cooperative effort by a group" },
+        { word: "Leadership", clue: "Action of leading a group" },
+        { word: "Mentorship", clue: "Guidance provided by a mentor" },
+        { word: "Cooperation", clue: "Working together towards a common goal" },
+        { word: "Support", clue: "Providing assistance or encouragement" },
+        { word: "Encouragement", clue: "Action of giving support" },
+        { word: "Motivation", clue: "Reason for doing something" },
+        { word: "Inspiration", clue: "Process of being mentally stimulated" },
+        { word: "Dedication", clue: "Commitment to a task or purpose" },
+        { word: "Discipline", clue: "Training to improve skills" },
+        { word: "Focus", clue: "Concentration on a particular task" },
+        { word: "Balance", clue: "State of equilibrium" },
+        { word: "Wellness", clue: "State of being in good health" },
+        { word: "Mindfulness", clue: "Quality of being present and aware" },
+        { word: "Self-care", clue: "Taking care of one's own needs" },
+        { word: "Empowerment", clue: "Giving power or authority to someone" },
+        { word: "Advocacy", clue: "Public support for a cause" },
+        { word: "Activism", clue: "Efforts to promote social change" },
+        { word: "Volunteerism", clue: "Offering services without payment" },
+        {
+          word: "Philanthropy",
+          clue: "Desire to promote the welfare of others",
+        },
+        { word: "Charity", clue: "Voluntary giving to help others" },
+        { word: "Generosity", clue: "Quality of being kind and giving" },
+        { word: "Compassion", clue: "Sympathetic concern for others" },
+        {
+          word: "Altruism",
+          clue: "Selfless concern for the well-being of others",
+        },
+        { word: "Kindness", clue: "Quality of being friendly and considerate" },
+        { word: "Gratitude", clue: "Feeling of thankfulness" },
+        { word: "Forgiveness", clue: "Action of forgiving or being forgiven" },
+        {
+          word: "Acceptance",
+          clue: "Action of consenting to receive something",
+        },
+        { word: "Tolerance", clue: "Willingness to accept differences" },
+        {
+          word: "Patience",
+          clue: "Ability to accept delay without frustration",
+        },
+        { word: "Humility", clue: "Quality of being humble" },
+        { word: "Honesty", clue: "Quality of being truthful" },
+        {
+          word: "Integrity",
+          clue: "Quality of being honest and having strong morals",
+        },
+        { word: "Respect", clue: "Admiration for someone or something" },
+        { word: "Trust", clue: "Firm belief in the reliability of someone" },
+        { word: "Loyalty", clue: "Strong feeling of support or allegiance" },
+        {
+          word: "Friendship",
+          clue: "Close and trusting relationship between people",
+        },
+        { word: "Community", clue: "Group of people living together" },
+        { word: "Connection", clue: "Relationship or link between people" },
+        { word: "Belonging", clue: "Feeling of being accepted and included" },
+        { word: "Unity", clue: "State of being united or joined" },
+        { word: "Diversity", clue: "Variety in culture" },
+        { word: "Inclusion", clue: "Action of including or being included" },
+        { word: "Equity", clue: "Fairness and justice in treatment" },
+        { word: "Justice", clue: "Fairness in the way people are treated" },
+        { word: "Peace", clue: "State of tranquility or quiet" },
+        { word: "Harmony", clue: "State of being in agreement" },
+        { word: "Collaboration", clue: "Working together to achieve a goal" },
+        {
+          word: "Synergy",
+          clue: "Interaction of elements to produce a greater effect",
+        },
+        { word: "Teamwork", clue: "Cooperative effort by a group" },
+        { word: "Leadership", clue: "Action of leading a group" },
+        { word: "Mentorship", clue: "Guidance provided by a mentor" },
+        { word: "Cooperation", clue: "Working together towards a common goal" },
+        { word: "Support", clue: "Providing assistance or encouragement" },
+        { word: "Encouragement", clue: "Action of giving support" },
+        { word: "Motivation", clue: "Reason for doing something" },
+        { word: "Inspiration", clue: "Process of being mentally stimulated" },
+        { word: "Dedication", clue: "Commitment to a task or purpose" },
+        { word: "Discipline", clue: "Training to improve skills" },
+        { word: "Focus", clue: "Concentration on a particular task" },
+        { word: "Balance", clue: "State of equilibrium" },
+        { word: "Wellness", clue: "State of being in good health" },
+        { word: "Mindfulness", clue: "Quality of being present and aware" },
+        { word: "Self-care", clue: "Taking care of one's own needs" },
+        { word: "Empowerment", clue: "Giving power or authority to someone" },
+        { word: "Advocacy", clue: "Public support for a cause" },
+        { word: "Activism", clue: "Efforts to promote social change" },
+        { word: "Volunteerism", clue: "Offering services without payment" },
+        {
+          word: "Philanthropy",
+          clue: "Desire to promote the welfare of others",
+        },
+        { word: "Charity", clue: "Voluntary giving to help others" },
+      ];
+
+      function getRandomWords() {
+        const shuffled = [...wordList].sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, 13); // Pick 13 random words
+      }
+
+      const crosswordGrid = Array(gridSize)
+        .fill()
+        .map(() => Array(gridSize).fill(null));
+      const solutionMap = {};
+
+      let acrossNum = 1; // Persist acrossNum for across clues
+      let downNum = 1; // Persist downNum for down clues
+
+      // Restrict input to only Hindi characters (Devanagari script)
+      function restrictToHindiInput(event) {
+        const inputText = event.target.textContent.trim();
+        const isValid = /^[\u0900-\u097F]$/i.test(inputText);
+
+        if (!isValid && inputText !== "") {
+          event.target.textContent = ""; // Clear invalid input
+          // alert("कृपया केवल हिंदी अक्षर दर्ज करें"); // Alert in Hindi
+        }
+      }
+
+      function createGrid() {
+        for (let i = 0; i < gridSize; i++) {
+          for (let j = 0; j < gridSize; j++) {
+            const cell = document.createElement("div");
+            cell.classList.add("cell");
+            cell.dataset.row = i;
+            cell.dataset.col = j;
+
+            const letterDiv = document.createElement("div");
+            letterDiv.classList.add("letter");
+            letterDiv.setAttribute("contenteditable", true);
+
+            // Add event listener to restrict input to Hindi characters only
+            letterDiv.addEventListener("input", restrictToHindiInput);
+
+            cell.appendChild(letterDiv); // Add editable letter div
+            gridContainer.appendChild(cell);
+          }
+        }
+      }
+
+      // Restrict input to only Hindi characters (Devanagari script) and allow composite characters
+      function restrictToHindiInput(event) {
+        let inputText = event.target.textContent.normalize("NFC").trim();
+
+        // Allow only Devanagari characters and halant
+        const isValid = /^[\u0900-\u097F\u200D\s]+$/u.test(inputText); // \u200D handles ZWJ for ligatures
+
+        if (!isValid && inputText !== "") {
+          event.target.textContent = ""; // Clear invalid input
+          alert("कृपया केवल हिंदी अक्षर दर्ज करें");
+          return;
+        }
+
+        // Limit to 2 visible grapheme clusters
+        const graphemes = [...inputText];
+        if (graphemes.length > 2) {
+          event.target.textContent = graphemes.slice(0, 2).join("");
+        }
+      }
+
+      function placeWords(words) {
+        words.forEach((word) => {
+          const isVertical = Math.random() > 0.5;
+          let placed = false;
+          let attempts = 0;
+
+          while (!placed && attempts < 100) {
+            const row = Math.floor(Math.random() * gridSize);
+            const col = Math.floor(Math.random() * gridSize);
+            if (canPlaceWord(word.word, row, col, isVertical)) {
+              placed = placeWord(word.word, row, col, isVertical, word.clue);
+            }
+            attempts++;
+          }
+
+          if (!placed) {
+            console.warn(`Could not place word: ${word.word}`);
+          }
+        });
+      }
+      function canPlaceWord(word, row, col, isVertical) {
+        if (isVertical) {
+          if (row + word.length > gridSize) return false;
+          for (let i = 0; i < word.length; i++) {
+            const cellLetter = crosswordGrid[row + i][col];
+            if (cellLetter !== null && cellLetter !== word[i]) return false;
+          }
+        } else {
+          if (col + word.length > gridSize) return false;
+          for (let i = 0; i < word.length; i++) {
+            const cellLetter = crosswordGrid[row][col + i];
+            if (cellLetter !== null && cellLetter !== word[i]) return false;
+          }
+        }
+        return true;
+      }
+
+      function placeWord(word, row, col, isVertical, clue) {
+        let clueAdded = false;
+        for (let i = 0; i < word.length; i++) {
+          const cell = document.querySelector(
+            `[data-row="${row + (isVertical ? i : 0)}"][data-col="${
+              col + (isVertical ? 0 : i)
+            }"]`
+          );
+          crosswordGrid[row + (isVertical ? i : 0)][
+            col + (isVertical ? 0 : i)
+          ] = word[i];
+
+          if (i === 0) {
+            // Add clue number to the first cell of the word
+            const clueNumber = document.createElement("span");
+            clueNumber.classList.add("clue-number");
+            clueNumber.textContent = isVertical ? downNum : acrossNum;
+            cell.appendChild(clueNumber);
+            clueAdded = true;
+          }
+        }
+
+        if (clueAdded) {
+          if (isVertical) {
+            downList.innerHTML += `<li>${downNum}: ${clue}</li>`;
+            downNum++; // Increment downNum for the next down clue
+          } else {
+            acrossList.innerHTML += `<li>${acrossNum}: ${clue}</li>`;
+            acrossNum++; // Increment acrossNum for the next across clue
+          }
+        }
+        return true;
+      }
+
+      // Set the unused cells to be black (dark color)
+      function fillBlackCells() {
+        const cells = document.querySelectorAll(".cell");
+        cells.forEach((cell) => {
+          const row = parseInt(cell.dataset.row);
+          const col = parseInt(cell.dataset.col);
+          if (crosswordGrid[row][col] === null) {
+            cell.classList.add("black");
+          }
+        });
+      }
+
+      document.addEventListener("click", function (e) {
+        const isLetterCell = e.target.classList.contains("letter");
+        if (!isLetterCell) {
+          e.preventDefault();
+          window.getSelection().removeAllRanges();
+        }
+      });
+
+      // Block key typing if not in .letter input
+      document.addEventListener("keydown", function (e) {
+        const isLetterCell =
+          document.activeElement.classList.contains("letter");
+        if (!isLetterCell) {
+          e.preventDefault();
+        }
+      });
+      function checkAnswers() {
+        const cells = document.querySelectorAll(".cell");
+        cells.forEach((cell) => {
+          // Skip cells that are black (unused cells)
+          if (cell.classList.contains("black")) {
+            return; // Skip this iteration if the cell is black
+          }
+
+          const row = cell.dataset.row;
+          const col = cell.dataset.col;
+          const correctLetter = crosswordGrid[row][col];
+          const inputLetter = cell.textContent.trim().toUpperCase();
+
+          if (correctLetter !== inputLetter) {
+            cell.style.backgroundColor = "red"; // Incorrect answer
+          } else {
+            cell.style.backgroundColor = "green"; // Correct answer
+          }
+        });
+      }
+
+      // Initialize game
+      createGrid();
+      const selectedWords = getRandomWords();
+      placeWords(selectedWords);
+      fillBlackCells(); // Fill unused cells with black color
+    </script>
+  </body>
+</html>
